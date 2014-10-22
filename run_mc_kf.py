@@ -8,7 +8,7 @@ Created on Mon Oct 20 15:39:51 2014
 """
 
 import numpy as np
-from KalmanFilter.kalman_filter import KalmanFilter
+from kalmanFilter.kalman_filter import KalmanFilter
 
 import matplotlib.pyplot as plt
 
