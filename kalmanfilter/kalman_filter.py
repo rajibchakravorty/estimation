@@ -5,7 +5,7 @@ Created on Mon Oct 20 15:11:13 2014
 @author: rchakrav
 """
 
-from numpy import dot, sum, tile, linalg
+from numpy import dot
 from numpy.linalg import inv
 
 
@@ -47,8 +47,9 @@ class KalmanFilter( object ):
     def runFilter( self, x0, P0, y1 ):
         
         x10, P10 = self.predict( x0, P0 )
-        yhat, S  = self.innov( y1, x10, P10 )
-        x11, p11 = self.update( x10, P10, yhat, S )
+        yhat, S  = self.predictedMeas( x10, P10 )
+        ytilde   = self.innov( y1, yhat)
+        x11, p11 = self.update( x10, P10, ytilde, S )
         
         return x11, p11
     
@@ -60,13 +61,19 @@ class KalmanFilter( object ):
         
         return x10,P10
         
-    def innov( self, y1, x10, P10 ):
+    def predictedMeas( self, x10, P10 ):
         
-        ytilde = y1 - dot( self.H, x10 )
+        yhat = dot( self.H, x10 )
         
         S = dot( self.H, dot( P10, self.H.T ) ) + self.R
         
-        return ytilde, S
+        return yhat, S        
+        
+    def innov( self, y1, yhat ):
+        
+        ytilde = y1 - yhat
+
+        return ytilde
     
     def update( self, x10, P10, ytilde, S ):
         

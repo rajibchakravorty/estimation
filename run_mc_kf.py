@@ -8,7 +8,7 @@ Created on Mon Oct 20 15:39:51 2014
 """
 
 import numpy as np
-from kalmanFilter.kalman_filter import KalmanFilter
+from kalmanfilter.kalman_filter import KalmanFilter
 from utility.utility import generateGroundTruthState, generateMeasuremnent
 
 
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     for mcr in np.arange( 0, monte_carlo_repeat ):
         
         ##generate the measurements
-        measurements      = generateMeasuremnent( groundTruthStates, H, R )
+        measurements      = generateMeasuremnent( groundTruthStates, H, R, N_iter )
     
         # the filter loop
         estimatedStates = np.zeros( ( F.shape[0], N_iter ) )
@@ -106,10 +106,6 @@ if __name__ == '__main__':
         ## --- initiating the filter with first estimate
         ## initiates the state and the covariance with
         ## 2-point initiation method
-    
-        ## initates the first guess of the state estimate with the same 
-        ## values as the first measurements and a fixed velocity (0,0)
-        ##estimatedStates[ :, 0 ] = [ measurements[0,0], measurements[0,1], 0,0 ]
     
         estimatedStates[ :, 1 ] = [ measurements[0,1], measurements[1,1],\
                                 (1/dt) * (measurements[0,1] - measurements[0,0]),\

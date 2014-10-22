@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-
+import numpy as np
 '''
     generates ground truth states of the object : 
         linear function of the immediate past state
@@ -31,7 +31,7 @@ def generateGroundTruthState( XInit, N_iter, \
     Function to generate measurements : linear function of the state
     
 '''
-def generateMeasuremnent( states, H, R ):
+def generateMeasuremnent( states, H, R, N_iter ):
     
     ##modelling the sensor returns
     measSize  = H.shape[ 0 ]
