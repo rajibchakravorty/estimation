@@ -19,16 +19,18 @@ Each estimation algorithm makes an assumption of these basic models and/or
 adds complexities on top of the basic model (adding more assumption and model
 parameter)
 
-Kalman Filter:
---------------
+The project is aimed to implement all the major, if not all, estimation/tracking
+algorithms in Python.
 
-Assumes:
+The objective of the project is to provide a Python based free platform (as opposed 
+to Matlab, which is the primary platform used for this field of research) for 
+gradutate students and researchers to conduct experiments. Besides this core objective, 
+other advantages include:
 
-- f() and h() are linear
-- w(k), v(k) are additive
-- w(k), v(k) are both normally distributed with mean 0 and variance Q and R
-respectively
-- w(i) and w(j) are uncorrelated, i \neq j
-- v(i) and v(j) are uncorrelated, i \neq j
-- measurement from target is available at each scan
-- no false measurements generated
+1) Possible speed-up through parallelization (easier in Python)
+2) Develop standardized test cases and peer-review of codes
+
+Dev environment
+===============
+
+Anaconda (http://continuum.io/downloads)
