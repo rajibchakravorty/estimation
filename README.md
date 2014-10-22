@@ -30,6 +30,8 @@ other advantages include:
 1) Possible speed-up through parallelization (easier in Python)
 2) Develop standardized test cases and peer-review of codes
 
+Use of the software is under GPL-3.0 license agreement.
+
 Dev environment
 ===============
 
