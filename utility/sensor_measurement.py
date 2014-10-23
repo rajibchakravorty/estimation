@@ -10,8 +10,6 @@ Created on Mon Oct 20 15:39:51 2014
 import numpy as np
 
 
-import matplotlib.pyplot as plt
-
 # -*- coding: utf-8 -*-
 
 class SensorMeasurement( object ):

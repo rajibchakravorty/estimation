@@ -7,7 +7,7 @@ Created on Mon Oct 20 15:39:51 2014
 
 import numpy as np
 from kalmanfilter.kalman_filter import KalmanFilter
-from utility.utility import generate2DGroundTruthState, generateMeasuremnent
+from utility.utility import generate2DGroundTruthState, generateMeasurements
 
 
 import matplotlib.pyplot as plt
@@ -59,15 +59,24 @@ if __name__ == '__main__':
     # Number of iterations/time steps
     N_iter = 50
     
+    # detection probability
+    PD = 0.9
+    
     ## density of false measuremetns /scan/m^2
     lam = 1e-4
     
     ## 2D world size
     worldSize = np.array( [1000, 400] )
     
-    ## count of false measurements in each time scan
-    ## according to a possion distribution with the given lambda
-    
-    falseMeasurementCounts = np.random.poisson( lam * worldSize[0] * worldSize[1], N_iter )
+    stateSize = F.shape[0]
+    measSize  = H.shape[0]
+
+    ## building up the trajectory ground truth
+    groundTruthStates = generate2DGroundTruthState( XInit, N_iter, F, np.dot( B, U ) )      
+
+    ##generate the measurements
+    measurements      = generateMeasurements( groundTruthStates, H, R, \
+                                              PD, lam, \
+                                              N_iter, worldSize )
     
     

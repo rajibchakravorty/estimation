@@ -56,3 +56,72 @@ def generateMeasuremnent( states, H, R, N_iter ):
         
     return measurements
 
+
+
+'''
+
+    Function to generate measurements : linear function of the state
+    Models missed detection and false detections
+    
+    True target detected with a probability of detection == detectionProb
+    False measurements are generated with a Poisson distribution specifed
+    by the density (falseMeasDensity )/scan/square unit of space and then
+    spreaded accross the 2D world uniformly
+    
+'''
+def generateMeasurements( states, H, R, \
+                          detectionProb, falseMeasDensity, \
+                          N_iter, worldSize, forceInitiation = True ):
+    
+    
+    measurements = list()
+    
+    targetDetection    = np.random.rand( N_iter  )
+    falseMeasurements  = np.random.poisson( falseMeasDensity * worldSize[0] * worldSize[1], N_iter)    
+    
+    
+    ##modelling the sensor returns
+    measSize  = H.shape[ 0 ]
+    stateSize = H.shape[ 1 ]
+    for i in np.arange( 0, N_iter ):
+        
+        if( ( forceInitiation == True ) and ( i < 2) ):
+            meas = SM( True, measSize, 1, i )
+            Xt = np.reshape(  states[ :, i ], ( stateSize, 1 ) ) 
+            Y = np.dot( H, Xt ) + np.reshape( np.random.multivariate_normal( [0,0], R , 1 ), (measSize, 1 ) )
+        
+            meas.measurements = Y
+        
+        else:
+            
+            if( targetDetection[ i ] <= detectionProb ):
+                
+                print i
+                
+                measurementCount = falseMeasurements[ i ] + 1
+                meas = SM( True, measSize, measurementCount, i )
+                Xt = np.reshape(  states[ :, i ], ( stateSize, 1 ) ) 
+                Y = np.dot( H, Xt ) + np.reshape( np.random.multivariate_normal( [0,0], R , 1 ), (measSize, 1 ) )
+        
+                world = np.tile( np.reshape( worldSize, ( 2, 1 ) ) , (1,falseMeasurements[ i ] ) )
+                
+                falseXY = np.random.rand( 2, falseMeasurements[ i ] ) * world
+                meas.measurements = np.concatenate( ( Y, falseXY ), axis = 1 )
+                
+            else:
+                
+                print i
+                measurementCount = falseMeasurements[ i ]
+                meas = SM( False, measSize, measurementCount, i )
+                
+                world = np.tile( np.reshape( worldSize, ( 2, 1 ) ) , (1,falseMeasurements[ i ] ) )
+                
+                falseXY = np.random.rand( 2, falseMeasurements[ i ] ) * world
+                meas.measurements = falseXY
+                            
+                
+        
+        measurements.append( meas )
+        ##measurements[:,i ] = np.reshape( Y, (measSize, ) )
+        
+    return measurements
