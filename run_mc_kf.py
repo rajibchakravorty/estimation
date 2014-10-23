@@ -9,7 +9,7 @@ Created on Mon Oct 20 15:39:51 2014
 
 import numpy as np
 from kalmanfilter.kalman_filter import KalmanFilter
-from utility.utility import generateGroundTruthState, generateMeasuremnent
+from utility.utility import generate2DGroundTruthState, generateMeasuremnent
 
 
 import matplotlib.pyplot as plt
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     squaredError = np.zeros( ( stateSize, N_iter ) )
 
     ## building up the trajectory ground truth
-    groundTruthStates = generateGroundTruthState( XInit, N_iter, F, np.dot( B, U ) )      
+    groundTruthStates = generate2DGroundTruthState( XInit, N_iter, F, np.dot( B, U ) )      
 
     ##------------------ Kalman fitler starts
 
@@ -106,19 +106,23 @@ if __name__ == '__main__':
         ## --- initiating the filter with first estimate
         ## initiates the state and the covariance with
         ## 2-point initiation method
-    
-        estimatedStates[ :, 1 ] = [ measurements[0,1], measurements[1,1],\
-                                (1/dt) * (measurements[0,1] - measurements[0,0]),\
-                                (1/dt) * (measurements[1,1] - measurements[1,0]) ]
-                                
+        
+        y1 = np.reshape( measurements[ 1 ].measurements, ( measSize, 1 ) )
+        y0 = np.reshape( measurements[ 0 ].measurements, ( measSize, 1 ) )
+        
+        estimatedStates[ :, 1 ] = [ y1[0], y1[1],\
+                                    (1/dt) * (y1[0] - y0[0]),\
+                                    (1/dt) * (y1[1] - y0[1]) ]
+                                    
         ## initial gues of the covariance with fixed values
         estimatedCov = np.concatenate( ( np.concatenate( ( R, (1.0/dt) * R ), axis = 1 ),\
              np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
         for i in np.arange(1, N_iter):
             
             Xt = np.reshape( estimatedStates[ :, i - 1 ], ( stateSize, 1 ) ) 
-            Yt = np.reshape( measurements[ :, i ], ( measSize, 1 ) )
-
+            Yt = np.reshape( measurements[ i ].measurements, ( measSize, 1 ) )
+            
+            
             ## for monte carlo run we take the advantage of runFilter method:
             ## of KF
             X, estimatedCov = kf.runFilter( Xt, estimatedCov, Yt )

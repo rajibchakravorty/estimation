@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+
+from sensor_measurement import SensorMeasurement as SM
 '''
     generates ground truth states of the object : 
         linear function of the immediate past state
 '''
 
-def generateGroundTruthState( XInit, N_iter, \
+def generate2DGroundTruthState( XInit, N_iter, \
                               transitionMatrix, \
                               input ):
     
@@ -33,16 +35,24 @@ def generateGroundTruthState( XInit, N_iter, \
 '''
 def generateMeasuremnent( states, H, R, N_iter ):
     
+    
+    measurements = list()
+    
+    
     ##modelling the sensor returns
     measSize  = H.shape[ 0 ]
     stateSize = H.shape[ 1 ]
-    measurements = np.zeros( ( measSize, N_iter ) )
     for i in np.arange( 0, N_iter ):
         
         Xt = np.reshape(  states[ :, i ], ( stateSize, 1 ) ) 
         
         Y = np.dot( H, Xt ) + np.reshape( np.random.multivariate_normal( [0,0], R , 1 ), (measSize, 1 ) )
         
-        measurements[:,i ] = np.reshape( Y, (measSize, ) )
+        meas = SM( True, measSize, 1, i )
+        meas.measurements = Y
+        
+        measurements.append( meas )
+        ##measurements[:,i ] = np.reshape( Y, (measSize, ) )
         
     return measurements
+

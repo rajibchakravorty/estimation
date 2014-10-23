@@ -27,31 +27,40 @@ class PDAFilter( object ):
         
         self.lam = lam
     
-    def runFilter( self, x0, P0 ):
-        
-        x10, P10 = self.predict( x0, P0 )
-        yhat, S  = self.predictedMeas( x10, P10 )         
+    def runFilter( self, x0, P0, ys ):
+
         
         '''
             TODO : gating, association, likelihood calculation, mixture update
             
         '''
         
-    def predict( self, x0, P0 ):
+        if( ys.shape[1] == 0 ):
+            
+            self.kf.predict( x0, P0 )
+            
         
-        x10, p10 = self.kf.predict( x0, P0 )
-    
-    def predictedMeas( self, x10, P10 ):
+        totalValidatedMeas = ys.shape[1]
+
+
+        stateSize = x0.shape[0]
+        measSize  = y0.shape[0]
+        x11s = np.zeros( ( stateSize, totalValidation + 1 ) )
+        p11s = np.zeros( ( stateSize, stateSize, totalValidation + 1 ) )
+        x11s[ :,0 ] = np.reshape( x10, ( stateSize, 1 ) ) 
+        p11s[ :,:,0 ] = np.reshape( p10, ( stateSize, stateSize ) )
         
-        return self.kf.predictedMeas( x10, p10 )
+        for vm in arange( 1, totalValidatedMeas ):
+            
+            yt = np.reshape( ys[:,vm], ( measSize, 1 ) )            
+            x11u, p11u = self.kf.runFilter( x10, P10, yt ):
+                
+            x11s[ :,0 ] = np.reshape( x11u, ( stateSize, 1 ) ) 
+            p11s[ :,:,0 ] = np.reshape( p11u, ( stateSize, stateSize ) )
+            
+            
         
-    def innov( self, y1, x10, P10 ):
         
-        ytilde = y1 - dot( self.H, x10 )
-        
-        S = dot( self.H, dot( P10, self.H.T ) ) + self.R
-        
-        return ytilde, S
     
     def update( self, x10, P10, ytilde, S ):
         
