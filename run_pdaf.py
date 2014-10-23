@@ -6,7 +6,7 @@ Created on Mon Oct 20 15:39:51 2014
 """
 
 import numpy as np
-from kalmanfilter.kalman_filter import KalmanFilter
+from pdafilter.pda_filter import PDAFilter
 from utility.utility import generate2DGroundTruthState, generateMeasurements
 
 
@@ -63,10 +63,10 @@ if __name__ == '__main__':
     PD = 0.9
     
     ## density of false measuremetns /scan/m^2
-    lam = 1e-4
+    lam = 1e-1
     
     ## 2D world size
-    worldSize = np.array( [1000, 400] )
+    worldSize = np.array( [10, 10] )
     
     stateSize = F.shape[0]
     measSize  = H.shape[0]
@@ -79,4 +79,40 @@ if __name__ == '__main__':
                                               PD, lam, \
                                               N_iter, worldSize )
     
+    ##------------------ Kalman fitler starts
+
+
+    ## initiation
+    pdaf = PDAFilter( )
     
+    
+    ## initiate the model parameters
+    pdaf.initModel( F, H, Q, R, B, U, PD, lam )
+        
+    
+    
+    # the filter loop
+    estimatedStates = np.zeros( ( F.shape[0], N_iter ) )
+    
+    
+    ## --- initiating the filter with first estimate
+    ## initiates the state and the covariance with
+    ## 2-point initiation method
+    
+    y1 = np.reshape( measurements[ 1 ].measurements, ( measSize, 1 ) )
+    y0 = np.reshape( measurements[ 0 ].measurements, ( measSize, 1 ) )
+    
+    estimatedStates[ :, 1 ] = [ y1[0], y1[1],\
+                                (1/dt) * (y1[0] - y0[0]),\
+                                (1/dt) * (y1[1] - y0[1]) ]
+                                
+    ## initial gues of the covariance with fixed values
+    estimatedCov = np.concatenate( ( np.concatenate( ( R, (1.0/dt) * R ), axis = 1 ),\
+                                     np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
+    
+    for t in np.arange( 1, N_iter ):
+        
+        '''
+            TODO : PDA filter loop, gating/validation, Gaussian mixture
+        '''
+        
