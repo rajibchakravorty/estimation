@@ -110,9 +110,22 @@ if __name__ == '__main__':
     estimatedCov = np.concatenate( ( np.concatenate( ( R, (1.0/dt) * R ), axis = 1 ),\
                                      np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
     
-    for t in np.arange( 1, N_iter ):
+    for i in np.arange( 2, 3 ):
         
         '''
             TODO : PDA filter loop, gating/validation, Gaussian mixture
         '''
+        
+        ## collect the measurement
+        
+        ## ideally valid measurements should be gated
+        ## for now validate everything
+        
+        sensorReturns = measurements[ i ].measurements
+        
+        Xt = np.reshape( estimatedStates[ :, i - 1 ], ( stateSize, 1 ) )
+        
+        x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, sensorReturns, 1, 25 )
+        
+        
         
