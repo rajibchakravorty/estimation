@@ -103,7 +103,7 @@ if __name__ == '__main__':
     ## initial gues of the covariance with fixed values
     estimatedCov = np.concatenate( ( np.concatenate( ( R, (1.0/dt) * R ), axis = 1 ),\
                                      np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
-    for i in np.arange(1, N_iter):
+    for i in np.arange(2, N_iter):
         
         Xt = np.reshape( estimatedStates[ :, i - 1 ], ( stateSize, 1 ) ) 
         Yt = np.reshape( measurements[ i ].measurements, ( measSize, 1 ) )
@@ -119,8 +119,8 @@ if __name__ == '__main__':
         
 
     ## some plotting function to see how we have fared
-    plt.plot( groundTruthStates[0,1: ], groundTruthStates[1,1: ] )
-    plt.plot( estimatedStates[0,1: ], estimatedStates[1,1: ] )
+    plt.plot( groundTruthStates[0,2: ], groundTruthStates[1,2: ] )
+    plt.plot( estimatedStates[0,2: ], estimatedStates[1,2: ] )
     ##plt.plot( measurements[0,1:], measurements[1,1:]  )
     plt.legend( ['True Trajectory','Estimated Trajectory'], loc = 'upper left' )
     plt.xlabel( 'X' )

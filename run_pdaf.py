@@ -60,10 +60,10 @@ if __name__ == '__main__':
     N_iter = 50
     
     # detection probability
-    PD = 0.9
+    PD = 1.0
     
     ## density of false measuremetns /scan/m^2
-    lam = 1e-1
+    lam = 0
     
     ## 2D world size
     worldSize = np.array( [10, 10] )
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     estimatedCov = np.concatenate( ( np.concatenate( ( R, (1.0/dt) * R ), axis = 1 ),\
                                      np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
     
-    for i in np.arange( 2, 3 ):
+    for i in np.arange( 2, N_iter ):
         
         '''
             TODO : PDA filter loop, gating/validation, Gaussian mixture
@@ -126,6 +126,20 @@ if __name__ == '__main__':
         Xt = np.reshape( estimatedStates[ :, i - 1 ], ( stateSize, 1 ) )
         
         x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, sensorReturns, 1, 25 )
+        
+        X, estimatedCov = pdaf.mixOutput( x11s, P11s, betas )
+        
+        estimatedStates[ :, i ] = np.reshape( X, (stateSize, ) )
+        
+        
+    ## some plotting function to see how we have fared
+    plt.plot( groundTruthStates[0,2: ], groundTruthStates[1,2: ] )
+    plt.plot( estimatedStates[0,2: ], estimatedStates[1,2: ] )
+    ##plt.plot( measurements[0,1:], measurements[1,1:]  )
+    plt.legend( ['True Trajectory','Estimated Trajectory'], loc = 'upper left' )
+    plt.xlabel( 'X' )
+    plt.ylabel( 'Y' )
+    plt.show()
         
         
         

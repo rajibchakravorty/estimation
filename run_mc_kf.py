@@ -117,7 +117,7 @@ if __name__ == '__main__':
         ## initial gues of the covariance with fixed values
         estimatedCov = np.concatenate( ( np.concatenate( ( R, (1.0/dt) * R ), axis = 1 ),\
              np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
-        for i in np.arange(1, N_iter):
+        for i in np.arange(2, N_iter):
             
             Xt = np.reshape( estimatedStates[ :, i - 1 ], ( stateSize, 1 ) ) 
             Yt = np.reshape( measurements[ i ].measurements, ( measSize, 1 ) )
@@ -140,29 +140,28 @@ if __name__ == '__main__':
     
     
     ## some plotting function to see how we have fared
-    time_axis = dt * np.arange( 1, N_iter )
-    plt.plot( time_axis, rmse[0,1: ] )
-    plt.ylim( [0, max( rmse[0,1: ] ) ] )
+    time_axis = dt * np.arange( 2, N_iter )
+    plt.plot( time_axis, rmse[0,2: ] )
+    plt.ylim( [0, max( rmse[0,2: ] ) ] )
     plt.xlabel( 'Time' )
     plt.ylabel( 'Mean Squared Error (X-Pos)' )    
     plt.show()
 
 
-    plt.plot( time_axis, rmse[1,1: ] )
+    plt.plot( time_axis, rmse[1,2: ] )
     plt.xlabel( 'Time' )
-    plt.ylim( [0, max( rmse[1,1: ] ) ] )
+    plt.ylim( [0, max( rmse[1,2: ] ) ] )
     plt.ylabel( 'Mean Squared Error (Y-Pos)' )    
     plt.show()
     
-    plt.plot( time_axis, rmse[2,1: ] )
+    plt.plot( time_axis, rmse[2,2: ] )
     plt.xlabel( 'Time' )
-    plt.ylim( [0, max( rmse[2,1: ] ) ] )
+    plt.ylim( [0, max( rmse[2,2: ] ) ] )
     plt.ylabel( 'Mean Squared Error (X-Velocity)' )    
     plt.show()
     
-    plt.plot( time_axis, rmse[3,1: ] )
+    plt.plot( time_axis, rmse[3,2: ] )
     plt.xlabel( 'Time' )
-    plt.ylim( [0, max( rmse[3,1: ] ) ] )
+    plt.ylim( [0, max( rmse[3,2: ] ) ] )
     plt.ylabel( 'Mean Squared Error (Y-Velocity)' )    
     plt.show()
-                
