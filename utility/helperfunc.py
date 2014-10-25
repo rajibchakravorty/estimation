@@ -29,3 +29,28 @@ def guassmix( means, covariances, weights ):
         
         
     return mixedMean, mixedCov
+    
+    
+def validateReturns( measurements, yhat, S,  validationWindow ):
+    
+    totalMeasurements = measurements.shape [ 1 ]
+    measVector = measurements.shape[0]    
+    
+    sInv = lin.inv( S )    
+
+    selectedReturns =  np.empty( ( measVector, 1 ) )
+    for m in np.arange( 0, totalMeasurements ):
+        
+        ym = np.reshape( measurements[ :, m], ( measVector, 1  ) )
+        
+        stat = np.dot( ( ym - yhat ).T, np.dot( sInv, ( ym - yhat ) ) )
+        
+        if( stat < validationWindow ):
+            
+            selectedReturns = np.concatenate( (selectedReturns, ym ) )
+            
+        gateVolume = validationWindow * np.pi * np.sqrt( lin.det( S ) )
+        
+        return selectedReturns, gateVolume
+        
+        

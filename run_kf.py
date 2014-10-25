@@ -19,27 +19,28 @@ if __name__ == '__main__':
     ##----------- Declaring variables and constants
         
     #time step of mobile movement
-    dt = 0.1
+    dt = 1.0
     
     # Initialization of state matrices
     
     ## initial state of the object on a 2d plane
     ## starts at position (0,0) with velocity (0.1, 0.1)
 
-    XInit = np.array( [0.0, 0.0, 1.0, 1.0 ] )             
+    XInit = np.array( [100.0, 200.0, 35.0, 0.0 ] )             
     
     
     ## state transition matrix
     ##the following matrix assumes a constant velocity 
     ##in both of the axes
-    F = np.array( [ [1, 0, dt , 0], \
-                 [0, 1, 0  , dt],\
-                 [0, 0, 1, 0 ], 
-                 [0, 0, 0,1 ] ] )
+    F = np.array( [ [0.25 * np.power( dt, 4), 0, 0.5 * np.power( dt , 3), 0], \
+                 [0, 0.25 * np.power( dt, 4), 0  , 0.5 * np.power( dt , 3)],\
+                 [0.5 * np.power( dt , 3), 0, np.power( dt, 2 ), 0 ], 
+                 [0, 0.5 * np.power( dt , 3), 0, np.power( dt, 2 ) ] ] )
+    F = np.reshape( F, ( XInit.shape[0], XInit.shape[0] ) )
                  
     
     ##covariance to capture the uncertainty in the state transition
-    Q = np.eye( XInit.shape[0] )
+    Q = 2.0*np.eye( XInit.shape[0] )
 
     ## models acceleration in the state transition
     B = np.eye( XInit.shape[0] )
@@ -54,10 +55,10 @@ if __name__ == '__main__':
     
     
     #covariance of the sensor mesuarement error
-    R = 0.01 * np.eye( H.shape[0] )
+    R = 25 * np.eye( H.shape[0] )
 
     # Number of iterations/time steps
-    N_iter = 50
+    N_iter = 30
     
     ##----------- Declaring variables and constants
     

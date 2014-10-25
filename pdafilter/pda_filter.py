@@ -90,7 +90,7 @@ class PDAFilter( object ):
             x11s[ :, m+1 ]   = np.reshape( x11, ( stateSize, ) )
             p11s[:, :, m+1 ] = np.reshape( p11, (stateSize , stateSize ) )
             
-            betas[ m ] = self.PD*gateProbability*beta/totalReturns
+            betas[ m+1 ] = self.PD*gateProbability*beta/totalReturns
             
             
         return x11s, p11s, betas
@@ -101,7 +101,6 @@ class PDAFilter( object ):
             
             betas = betas / np.sum( betas )
             
-        print np.sum( betas )
             
         x11, p11 = guassmix( x11s, p11s, betas )
         

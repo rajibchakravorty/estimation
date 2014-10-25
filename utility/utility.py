@@ -94,27 +94,23 @@ def generateMeasurements( states, H, R, \
         
         else:
             
-            if( targetDetection[ i ] <= detectionProb ):
+            world = np.tile( np.reshape( worldSize, ( 2, 1 ) ) , (1,falseMeasurements[ i ] ) )
                 
-                print i
+            if( targetDetection[ i ] <= detectionProb ):
                 
                 measurementCount = falseMeasurements[ i ] + 1
                 meas = SM( True, measSize, measurementCount, i )
                 Xt = np.reshape(  states[ :, i ], ( stateSize, 1 ) ) 
                 Y = np.dot( H, Xt ) + np.reshape( np.random.multivariate_normal( [0,0], R , 1 ), (measSize, 1 ) )
         
-                world = np.tile( np.reshape( worldSize, ( 2, 1 ) ) , (1,falseMeasurements[ i ] ) )
                 
                 falseXY = np.random.rand( 2, falseMeasurements[ i ] ) * world
                 meas.measurements = np.concatenate( ( Y, falseXY ), axis = 1 )
                 
             else:
                 
-                print i
                 measurementCount = falseMeasurements[ i ]
                 meas = SM( False, measSize, measurementCount, i )
-                
-                world = np.tile( np.reshape( worldSize, ( 2, 1 ) ) , (1,falseMeasurements[ i ] ) )
                 
                 falseXY = np.random.rand( 2, falseMeasurements[ i ] ) * world
                 meas.measurements = falseXY

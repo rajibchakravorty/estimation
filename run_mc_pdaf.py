@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+"""
+Created on Sat Oct 25 22:39:30 2014
+
+@author: rajib
+"""
 
 # -*- coding: utf-8 -*-
 """
@@ -8,8 +13,11 @@ Created on Mon Oct 20 15:39:51 2014
 """
 
 import numpy as np
-from kalmanfilter.kalman_filter import KalmanFilter
-from utility.utility import generate2DGroundTruthState, generateMeasuremnent
+from pdafilter.pda_filter import PDAFilter
+from utility.utility import generate2DGroundTruthState,\
+                            generateMeasurements
+                            
+from utility.helperfunc import validateReturns
 
 
 import matplotlib.pyplot as plt
@@ -34,14 +42,14 @@ if __name__ == '__main__':
     ## state transition matrix
     ##the following matrix assumes a constant velocity 
     ##in both of the axes
-    F = np.array( [ [0.25 * np.power( dt, 4), 0, 0.5 * np.power( dt , 3), 0], \
-                 [0, 0.25 * np.power( dt, 4), 0  , 0.5 * np.power( dt , 3)],\
-                 [0.5 * np.power( dt , 3), 0, np.power( dt, 2 ), 0 ], 
-                 [0, 0.5 * np.power( dt , 3), 0, np.power( dt, 2 ) ] ] )
-    F = np.reshape( F, ( XInit.shape[0], XInit.shape[0] ) )             
+    F = np.array( [ [1, 0, dt , 0], \
+                 [0, 1, 0  , dt],\
+                 [0, 0, 1, 0 ], 
+                 [0, 0, 0,1 ] ] )
+                 
     
     ##covariance to capture the uncertainty in the state transition
-    Q = 2.0*np.array( [ 0.25 ]  )
+    Q = 2.0*np.eye( XInit.shape[0] )
 
     ## models acceleration in the state transition
     B = np.eye( XInit.shape[0] )
@@ -61,43 +69,58 @@ if __name__ == '__main__':
     # Number of iterations/time steps
     N_iter = 30
     
+    # detection probability
+    PD = 0.9
     
-    monte_carlo_repeat = 1000
+    ## density of false measuremetns /scan/m^2
+    lam = 1e-4
     
-    ##----------- Declaring variables and constants
+    ## validation window size
+    ## based on measurement vector length = 2  == (x, y)
+    ## and 0.99 gating probability
     
+    PG = 0.99
+    g  = 9.21
+    
+    ## 2D world size
+    worldSize = np.array( [1000, 400] )
     
     stateSize = F.shape[0]
     measSize  = H.shape[0]
-    
-    squaredError = np.zeros( ( stateSize, N_iter ) )
 
     ## building up the trajectory ground truth
     groundTruthStates = generate2DGroundTruthState( XInit, N_iter, F, np.dot( B, U ) )      
 
-    ##------------------ Kalman fitler starts
+    
+                                              
+                                                  
+    monte_carlo_repeat = 200
+    
+    ##------------------ PDA fitler starts
 
-    ## KF parameters are independent of Monte Carlo Run
-    ## and hence KF can be initiated here
 
     ## initiation
-    kf = KalmanFilter( )
+    pdaf = PDAFilter( )
+    
     
     ## initiate the model parameters
-    kf.initModel( F, H, Q, R, B, U )
-
-
-
+    pdaf.initModel( F, H, Q, R, B, U, PD, lam )
+    
+    
     ## repeat the algorithm for a number of 
     ## times and collect the error
     ## each time the random num gen produces a different set
     ## of errors and at the end the average error will
     ## indicate how the algorithm performs
     
+    squaredError = np.zeros( ( stateSize, N_iter ) )
     for mcr in np.arange( 0, monte_carlo_repeat ):
         
         ##generate the measurements
-        measurements      = generateMeasuremnent( groundTruthStates, H, R, N_iter )
+        measurements      = generateMeasurements( groundTruthStates, H, R, \
+                                              PD, lam, \
+                                              N_iter, worldSize )
+    
     
         # the filter loop
         estimatedStates = np.zeros( ( F.shape[0], N_iter ) )
@@ -107,8 +130,8 @@ if __name__ == '__main__':
         ## initiates the state and the covariance with
         ## 2-point initiation method
         
-        y1 = np.reshape( measurements[ 1 ].measurements, ( measSize, 1 ) )
-        y0 = np.reshape( measurements[ 0 ].measurements, ( measSize, 1 ) )
+        y1 = np.reshape( measurements[ 1 ].measurements, ( measSize,  ) )
+        y0 = np.reshape( measurements[ 0 ].measurements, ( measSize,  ) )
         
         estimatedStates[ :, 1 ] = [ y1[0], y1[1],\
                                     (1/dt) * (y1[0] - y0[0]),\
@@ -116,29 +139,47 @@ if __name__ == '__main__':
                                     
         ## initial gues of the covariance with fixed values
         estimatedCov = np.concatenate( ( np.concatenate( ( R, (1.0/dt) * R ), axis = 1 ),\
-             np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
-        for i in np.arange(2, N_iter):
+                                         np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
+        
+        for i in np.arange( 2, N_iter ):
             
-            Xt = np.reshape( estimatedStates[ :, i - 1 ], ( stateSize, 1 ) ) 
-            Yt = np.reshape( measurements[ i ].measurements, ( measSize, 1 ) )
+            '''
+                TODO : PDA filter loop, gating/validation, Gaussian mixture
+            '''
+            
+            ## collect the measurement
+            
+            ## ideally valid measurements should be gated
+            ## for now validate everything
+            
+            sensorReturns = measurements[ i ].measurements
+            
+            Xt = np.reshape( estimatedStates[ :, i - 1 ], ( stateSize, 1 ) )
+            
+            x10, p10 = pdaf.predict( Xt, estimatedCov )
+    
+            yhat, S = pdaf.predictedMeas( x10, p10 )
             
             
-            ## for monte carlo run we take the advantage of runFilter method:
-            ## of KF
-            X, estimatedCov = kf.runFilter( Xt, estimatedCov, Yt )
+            validReturns, validationVolume = \
+                             validateReturns( sensorReturns, yhat, S,  g )
+            
+            x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, sensorReturns, PG, validationVolume )
+            
+            X, estimatedCov = pdaf.mixOutput( x11s, P11s, betas )
             
             estimatedStates[ :, i ] = np.reshape( X, (stateSize, ) )
-
-
-        ##after one run of the KF for all the time steps, time to collect the
-        #squared error
+            
+            ##after one run of the KF for all the time steps, time to collect the
+            #squared error
          
         squaredError = squaredError + ( groundTruthStates - estimatedStates ) ** 2
 
     
     rmse = np.sqrt( squaredError / monte_carlo_repeat )
     
-    
+        
+        
     ## some plotting function to see how we have fared
     time_axis = dt * np.arange( 2, N_iter )
     plt.plot( time_axis, rmse[0,2: ] )
@@ -165,3 +206,4 @@ if __name__ == '__main__':
     plt.ylim( [0, max( rmse[3,2: ] ) ] )
     plt.ylabel( 'Mean Squared Error (Y-Velocity)' )    
     plt.show()
+        

@@ -7,7 +7,10 @@ Created on Mon Oct 20 15:39:51 2014
 
 import numpy as np
 from pdafilter.pda_filter import PDAFilter
-from utility.utility import generate2DGroundTruthState, generateMeasurements
+from utility.utility import generate2DGroundTruthState,\
+                            generateMeasurements
+                            
+from utility.helperfunc import validateReturns
 
 
 import matplotlib.pyplot as plt
@@ -19,14 +22,14 @@ if __name__ == '__main__':
     ##----------- Declaring variables and constants
         
     #time step of mobile movement
-    dt = 0.1
+    dt = 1.0
     
     # Initialization of state matrices
     
     ## initial state of the object on a 2d plane
     ## starts at position (0,0) with velocity (0.1, 0.1)
 
-    XInit = np.array( [0.0, 0.0, 1.0, 1.0 ] )             
+    XInit = np.array( [100.0, 200.0, 35.0, 0.0 ] )             
     
     
     ## state transition matrix
@@ -39,7 +42,7 @@ if __name__ == '__main__':
                  
     
     ##covariance to capture the uncertainty in the state transition
-    Q = np.eye( XInit.shape[0] )
+    Q = 2.0*np.eye( XInit.shape[0] )
 
     ## models acceleration in the state transition
     B = np.eye( XInit.shape[0] )
@@ -54,19 +57,26 @@ if __name__ == '__main__':
     
     
     #covariance of the sensor mesuarement error
-    R = 0.01 * np.eye( H.shape[0] )
+    R = 25 * np.eye( H.shape[0] )
 
     # Number of iterations/time steps
-    N_iter = 50
+    N_iter = 30
     
     # detection probability
-    PD = 1.0
+    PD = 0.9
     
     ## density of false measuremetns /scan/m^2
-    lam = 0
+    lam = 1e-4
+    
+    ## validation window size
+    ## based on measurement vector length = 2  == (x, y)
+    ## and 0.99 gating probability
+    
+    PG = 0.99
+    g  = 9.21
     
     ## 2D world size
-    worldSize = np.array( [10, 10] )
+    worldSize = np.array( [1000, 400] )
     
     stateSize = F.shape[0]
     measSize  = H.shape[0]
@@ -78,8 +88,10 @@ if __name__ == '__main__':
     measurements      = generateMeasurements( groundTruthStates, H, R, \
                                               PD, lam, \
                                               N_iter, worldSize )
+                                              
+
     
-    ##------------------ Kalman fitler starts
+    ##------------------ PDA fitler starts
 
 
     ## initiation
@@ -88,6 +100,7 @@ if __name__ == '__main__':
     
     ## initiate the model parameters
     pdaf.initModel( F, H, Q, R, B, U, PD, lam )
+
         
     
     
@@ -99,8 +112,8 @@ if __name__ == '__main__':
     ## initiates the state and the covariance with
     ## 2-point initiation method
     
-    y1 = np.reshape( measurements[ 1 ].measurements, ( measSize, 1 ) )
-    y0 = np.reshape( measurements[ 0 ].measurements, ( measSize, 1 ) )
+    y1 = np.reshape( measurements[ 1 ].measurements, ( measSize,  ) )
+    y0 = np.reshape( measurements[ 0 ].measurements, ( measSize,  ) )
     
     estimatedStates[ :, 1 ] = [ y1[0], y1[1],\
                                 (1/dt) * (y1[0] - y0[0]),\
@@ -112,10 +125,7 @@ if __name__ == '__main__':
     
     for i in np.arange( 2, N_iter ):
         
-        '''
-            TODO : PDA filter loop, gating/validation, Gaussian mixture
-        '''
-        
+       
         ## collect the measurement
         
         ## ideally valid measurements should be gated
@@ -125,7 +135,15 @@ if __name__ == '__main__':
         
         Xt = np.reshape( estimatedStates[ :, i - 1 ], ( stateSize, 1 ) )
         
-        x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, sensorReturns, 1, 25 )
+        x10, p10 = pdaf.predict( Xt, estimatedCov )
+
+        yhat, S = pdaf.predictedMeas( x10, p10 )
+        
+        
+        validReturns, validationVolume = \
+                         validateReturns( sensorReturns, yhat, S,  g )
+        
+        x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, sensorReturns, PG, validationVolume )
         
         X, estimatedCov = pdaf.mixOutput( x11s, P11s, betas )
         
