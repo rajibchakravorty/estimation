@@ -60,14 +60,23 @@ class PDAFilter( object ):
     def runFilter( self, x0, p0, ys, gateProbability, gateVolume ):
         
         
-        stateSize = x0.shape[0]
-        measSize  = ys.shape[0]
                 
         x10, p10 = self.predict( x0, p0 )
         
+        
+        
+        
         yhat, S = self.predictedMeas( x10, p10 )
         
-        totalReturns = ys.shape[1]
+        if( ys == None ):
+            
+            totalReturns = 0 
+        else:
+            totalReturns = ys.shape[1]
+        
+        stateSize = self.kf.F.shape[0]
+        measSize  = self.kf.H.shape[0]
+        
         x11s = np.zeros( (stateSize, totalReturns + 1 ) )
         p11s = np.zeros( ( stateSize, stateSize, totalReturns+ 1 ) )
         betas = np.zeros( totalReturns + 1 )

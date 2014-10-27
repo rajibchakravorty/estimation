@@ -5,11 +5,32 @@ Created on Sat Oct 25 22:39:30 2014
 @author: rajib
 """
 
-# -*- coding: utf-8 -*-
 """
-Created on Mon Oct 20 15:39:51 2014
+    Runs PDAF 1000 times; collected the estimated states (position, velocity);
+    calculate the error in each run and displays the Mean Squared Error of
+    states in 1000 runs.
+    
+    The target state transition matrix and the sensor model- both are linear.
+    
+    
+    On each run, 
+    
+    ** the target appears at [100.0, 200.0, 35, 0 ] 
+    (x_pos, y_pos, x_vel, y_vel ).
+    
+    ** the measurements are generated
+    
+    ** the target may be detected with a probability of PD (=0.9)
+    
+    ** false measurement may be detected with an Poisson distribution
+    of density lam ( = 1e-4 ) /scan/square unit  of area.
+    
+    ** the false measurements are located uniformaly accross the surveillance
+    area - a.ka. the world. The world size is [1000 400]. This translates to
+    roughly 40 false measumrents on average per scan.
+    
 
-@author: rchakrav
+
 """
 
 import numpy as np
@@ -39,17 +60,20 @@ if __name__ == '__main__':
     XInit = np.array( [100.0, 200.0, 35.0, 0.0 ] )             
     
     
-    ## state transition matrix
+   ## state transition matrix
     ##the following matrix assumes a constant velocity 
     ##in both of the axes
-    F = np.array( [ [1, 0, dt , 0], \
-                 [0, 1, 0  , dt],\
-                 [0, 0, 1, 0 ], 
-                 [0, 0, 0,1 ] ] )
-                 
+    F = np.array([ [ 1.0,0,dt,0 ],\
+                  [0,1.0,0,dt],\
+                  [ 0, 0,1.0,0 ],\
+                  [0,0,0,1.0] ])
     
-    ##covariance to capture the uncertainty in the state transition
-    Q = 2.0*np.eye( XInit.shape[0] )
+    ## covariance to capture the uncertainty in the state transition
+    Q = 2.0 * np.array( [ [0.25 * np.power( dt, 4), 0, 0.5 * np.power( dt , 3), 0], \
+                 [0, 0.25 * np.power( dt, 4), 0  , 0.5 * np.power( dt , 3)],\
+                 [0.5 * np.power( dt , 3), 0, np.power( dt, 2 ), 0 ], 
+                 [0, 0.5 * np.power( dt , 3), 0, np.power( dt, 2 ) ] ] )
+    Q = np.reshape( Q, ( XInit.shape[0], XInit.shape[0] ) )   
 
     ## models acceleration in the state transition
     B = np.eye( XInit.shape[0] )
@@ -67,7 +91,7 @@ if __name__ == '__main__':
     R = 25 * np.eye( H.shape[0] )
 
     # Number of iterations/time steps
-    N_iter = 30
+    N_iter = 21
     
     # detection probability
     PD = 0.9
@@ -94,7 +118,7 @@ if __name__ == '__main__':
     
                                               
                                                   
-    monte_carlo_repeat = 200
+    monte_carlo_repeat = 1000
     
     ##------------------ PDA fitler starts
 
@@ -143,10 +167,6 @@ if __name__ == '__main__':
         
         for i in np.arange( 2, N_iter ):
             
-            '''
-                TODO : PDA filter loop, gating/validation, Gaussian mixture
-            '''
-            
             ## collect the measurement
             
             ## ideally valid measurements should be gated
@@ -164,14 +184,15 @@ if __name__ == '__main__':
             validReturns, validationVolume = \
                              validateReturns( sensorReturns, yhat, S,  g )
             
-            x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, sensorReturns, PG, validationVolume )
+            x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, validReturns, PG, validationVolume )
             
             X, estimatedCov = pdaf.mixOutput( x11s, P11s, betas )
             
             estimatedStates[ :, i ] = np.reshape( X, (stateSize, ) )
             
-            ##after one run of the KF for all the time steps, time to collect the
-            #squared error
+        ##after one run of the PDAF for all the time steps, time to collect the
+
+        #squared error
          
         squaredError = squaredError + ( groundTruthStates - estimatedStates ) ** 2
 

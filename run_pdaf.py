@@ -32,17 +32,20 @@ if __name__ == '__main__':
     XInit = np.array( [100.0, 200.0, 35.0, 0.0 ] )             
     
     
-    ## state transition matrix
+    ### state transition matrix
     ##the following matrix assumes a constant velocity 
     ##in both of the axes
-    F = np.array( [ [1, 0, dt , 0], \
-                 [0, 1, 0  , dt],\
-                 [0, 0, 1, 0 ], 
-                 [0, 0, 0,1 ] ] )
-                 
+    F = np.array([ [ 1.0,0,dt,0 ],\
+                  [0,1.0,0,dt],\
+                  [ 0, 0,1.0,0 ],\
+                  [0,0,0,1.0] ])
     
-    ##covariance to capture the uncertainty in the state transition
-    Q = 2.0*np.eye( XInit.shape[0] )
+    ## covariance to capture the uncertainty in the state transition
+    Q = 2.0 * np.array( [ [0.25 * np.power( dt, 4), 0, 0.5 * np.power( dt , 3), 0], \
+                 [0, 0.25 * np.power( dt, 4), 0  , 0.5 * np.power( dt , 3)],\
+                 [0.5 * np.power( dt , 3), 0, np.power( dt, 2 ), 0 ], 
+                 [0, 0.5 * np.power( dt , 3), 0, np.power( dt, 2 ) ] ] )
+    Q = np.reshape( Q, ( XInit.shape[0], XInit.shape[0] ) )   
 
     ## models acceleration in the state transition
     B = np.eye( XInit.shape[0] )
@@ -140,10 +143,16 @@ if __name__ == '__main__':
         yhat, S = pdaf.predictedMeas( x10, p10 )
         
         
+        if( i == 15 ):
+            print "Debug"
+            
+        
+        
         validReturns, validationVolume = \
                          validateReturns( sensorReturns, yhat, S,  g )
+                         
         
-        x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, sensorReturns, PG, validationVolume )
+        x11s, P11s,betas = pdaf.runFilter( Xt, estimatedCov, validReturns, PG, validationVolume )
         
         X, estimatedCov = pdaf.mixOutput( x11s, P11s, betas )
         

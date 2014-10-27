@@ -47,10 +47,18 @@ def validateReturns( measurements, yhat, S,  validationWindow ):
         
         if( stat < validationWindow ):
             
-            selectedReturns = np.concatenate( (selectedReturns, ym ) )
+            selectedReturns = np.concatenate( (selectedReturns, ym ), axis = 1 )
             
-        gateVolume = validationWindow * np.pi * np.sqrt( lin.det( S ) )
+    ##the first column of selected returns is a garbage; created when the array
+    ##was initialized with np.empty(). so that has to be discarded
+    
+    if( selectedReturns.shape[1] == 1 ):
+        selectedReturns = None
+    else:
+        selectedReturns = selectedReturns[:,1: ]
+            
+    gateVolume = validationWindow * np.pi * np.sqrt( lin.det( S ) )
         
-        return selectedReturns, gateVolume
+    return selectedReturns, gateVolume
         
         
