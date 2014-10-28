@@ -64,9 +64,9 @@ if __name__ == '__main__':
     
     ## covariance to capture the uncertainty in the state transition
     Q = 2.0 * np.array( [ [0.25 * np.power( dt, 4), 0, 0.5 * np.power( dt , 3), 0], \
-                 [0, 0.25 * np.power( dt, 4), 0  , 0.5 * np.power( dt , 3)],\
-                 [0.5 * np.power( dt , 3), 0, np.power( dt, 2 ), 0 ], 
-                 [0, 0.5 * np.power( dt , 3), 0, np.power( dt, 2 ) ] ] )
+                         [0, 0.25 * np.power( dt, 4), 0  , 0.5 * np.power( dt , 3)],\
+                         [0.5 * np.power( dt , 3), 0, np.power( dt, 2 ), 0 ], 
+                         [0, 0.5 * np.power( dt , 3), 0, np.power( dt, 2 ) ] ] )
     Q = np.reshape( Q, ( XInit.shape[0], XInit.shape[0] ) )     
     
     

@@ -69,10 +69,10 @@ if __name__ == '__main__':
                   [0,0,0,1.0] ])
     
     ## covariance to capture the uncertainty in the state transition
-    Q = 2.0 * np.array( [ [0.25 * np.power( dt, 4), 0, 0.5 * np.power( dt , 3), 0], \
-                 [0, 0.25 * np.power( dt, 4), 0  , 0.5 * np.power( dt , 3)],\
-                 [0.5 * np.power( dt , 3), 0, np.power( dt, 2 ), 0 ], 
-                 [0, 0.5 * np.power( dt , 3), 0, np.power( dt, 2 ) ] ] )
+    Q = 0.75 * np.array( [ [0.25 * np.power( dt, 4), 0, 0.5 * np.power( dt , 3), 0], \
+                           [0, 0.25 * np.power( dt, 4), 0  , 0.5 * np.power( dt , 3)],\
+                           [0.5 * np.power( dt , 3), 0, np.power( dt, 2 ), 0 ], 
+                           [0, 0.5 * np.power( dt , 3), 0, np.power( dt, 2 ) ] ] )
     Q = np.reshape( Q, ( XInit.shape[0], XInit.shape[0] ) )   
 
     ## models acceleration in the state transition
@@ -88,7 +88,7 @@ if __name__ == '__main__':
     
     
     #covariance of the sensor mesuarement error
-    R = 25 * np.eye( H.shape[0] )
+    R = 1 * np.eye( H.shape[0] )
 
     # Number of iterations/time steps
     N_iter = 21
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     PD = 0.9
     
     ## density of false measuremetns /scan/m^2
-    lam = 1e-4
+    lam = 1e-6
     
     ## validation window size
     ## based on measurement vector length = 2  == (x, y)
@@ -120,7 +120,7 @@ if __name__ == '__main__':
                                                   
     monte_carlo_repeat = 1000
     
-    ##------------------ PDA fitler starts
+    ##------------------ PDA filter starts
 
 
     ## initiation
@@ -142,8 +142,8 @@ if __name__ == '__main__':
         
         ##generate the measurements
         measurements      = generateMeasurements( groundTruthStates, H, R, \
-                                              PD, lam, \
-                                              N_iter, worldSize )
+                                                  PD, lam, \
+                                                  N_iter, worldSize )
     
     
         # the filter loop
@@ -163,7 +163,8 @@ if __name__ == '__main__':
                                     
         ## initial gues of the covariance with fixed values
         estimatedCov = np.concatenate( ( np.concatenate( ( R, (1.0/dt) * R ), axis = 1 ),\
-                                         np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), axis = 0 )
+                                         np.concatenate( ( (1.0/dt) * R, (1.0/dt)*(1.0/dt)*(R+R) ), axis = 1 ) ), \
+                                         axis = 0 )
         
         for i in np.arange( 2, N_iter ):
             
@@ -191,9 +192,7 @@ if __name__ == '__main__':
             estimatedStates[ :, i ] = np.reshape( X, (stateSize, ) )
             
         ##after one run of the PDAF for all the time steps, time to collect the
-
         #squared error
-         
         squaredError = squaredError + ( groundTruthStates - estimatedStates ) ** 2
 
     

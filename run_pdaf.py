@@ -63,7 +63,7 @@ if __name__ == '__main__':
     R = 25 * np.eye( H.shape[0] )
 
     # Number of iterations/time steps
-    N_iter = 30
+    N_iter = 21
     
     # detection probability
     PD = 0.9
@@ -88,9 +88,9 @@ if __name__ == '__main__':
     groundTruthStates = generate2DGroundTruthState( XInit, N_iter, F, np.dot( B, U ) )      
 
     ##generate the measurements
-    measurements      = generateMeasurements( groundTruthStates, H, R, \
-                                              PD, lam, \
-                                              N_iter, worldSize )
+    ##measurements      = generateMeasurements( groundTruthStates, H, R, \
+    ##                                          PD, lam, \
+    ##                                          N_iter, worldSize )
                                               
 
     
