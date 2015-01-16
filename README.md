@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 Basics of Estimation Algorithm
 ====================
 
@@ -55,4 +54,3 @@ eye-catching graphic.
 
 Finally, consider defining some sprints and work items in Track & Plan to give 
 interested developers a sense of your cadence and upcoming enhancements.
->>>>>>> 1eb19db4f161188a66046702b20af4b737cbc7d5
