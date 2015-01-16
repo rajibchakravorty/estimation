@@ -143,6 +143,11 @@ if __name__ == '__main__':
         yhat, S = pdaf.predictedMeas( x10, p10 )
         
         
+        if( i == 15 ):
+            print "Debug"
+            
+        
+        
         validReturns, validationVolume = \
                          validateReturns( sensorReturns, yhat, S,  g )
                          

@@ -5,7 +5,28 @@ Created on Mon Oct 20 15:11:13 2014
 @author: rchakrav
 """
 
-'''
+    
+import sys
+sys.path.insert( 0, '../kalmanfilter')
+sys.path.insert( 0, '../utility' )
+
+import numpy as np
+import numpy.linalg as lin
+
+from numpy import dot
+
+from kalmanfilter.kalman_filter import KalmanFilter
+from pdafilter.pda_filter       import PDAFilter
+from utility.helperfunc         import guassmix
+
+from numpy import dot
+
+from numpy.linalg import inv
+
+
+class IPDAFilter( object ):
+    
+    '''
     Solves the estimation problem with the
     following linear model
     
@@ -26,51 +47,45 @@ Created on Mon Oct 20 15:11:13 2014
         d) The sensor can pick up measurements that are not originated from the
            target (aka clutter). This implementation assumes a non-parametric 
            temporal distribution and uniform spatial distribution of clutter.
+        e) The existence of target is uncertain.
+        
+        The uncertainty of target existence is solved in following manner:
+        
+        Successive measurements are used to "initiate" tracks automatically. However, once
+        initiated the algorithm lets the track exist in "two states" - "existing" and
+        "non-existing". The switching between these two states is modeled as a 22-state
+        markov state transition with defined probability (). This has one constraint - once
+        a track is "non-existing" it cannot come back to "existing"
            
 '''
-
-
-import sys
-sys.path.insert( 0, '../kalmanfilter')
-sys.path.insert( 0, '../utility' )
-
-import numpy as np
-import numpy.linalg as lin
-
-from numpy import dot
-
-from kalmanfilter.kalman_filter import KalmanFilter
-from utility.helperfunc import guassmix
-
-class PDAFilter( object ):
     
     
-    def initModel( self, F, H, Q, R, B, U, probDetection = 0.9, lam = 0 ):
+    def initModel( self, F, H, Q, R, B, U, probDetection = 0.9, lam = 0, trackStayProbability ):
         
-        self.kf = KalmanFilter()
-    
-        self.kf.initModel( F, H, Q, R, B, U )
-    
-        self.PD = probDetection
+        self.pdaf = PDAFilter( F, H, Q, R, B, U, probDetection = 0.9, lam = 0 )        
         
-        self.lam = lam
-    
+        self.trackStayProbability = trackStayProbability
 
-    def predict( self, x0, P0 ):
+
+    def predict( self, x0, P0, trackExistenceProb ):
         
-        return self.kf.predict( x0, P0 )
+        [x10, P10] = self.pdaf.predict( x0, P0 )
+        
+        predTrackTransProbs = self.trackTransitionMatrix * trackStayProbability
+        
+        return x10, P10, predTrackTransProbs
         
         
 
     def predictedMeas( self, x10, P10 ):
         
-        return self.kf.predictedMeas( x10, P10 )
+        return self.pdaf.predictedMeas( x10, P10 )
         
         
 
     def innov( self, yi, yhat ):
         
-        return self.kf.innov( yi, yhat )
+        return self.pdaf.innov( yi, yhat )
         
     
     def filterUpdate( self, x10, P10, ytilde, S ) :
@@ -109,7 +124,7 @@ class PDAFilter( object ):
         x11s[ :, 0 ]    = np.reshape( x10, (stateSize ) )
         p11s[ :, :, 0 ] = np.reshape( p10, ( stateSize, stateSize ) )
         
-        betas[ 0 ] = ( 1.0-self.PD*gateProbability) * gateProbability * np.sqrt( lin.det( 2.0 * np.pi * S  ) ) / gateVolume
+        betas[ 0 ] = ( 1-self.PD*gateProbability) * gateProbability * np.sqrt( lin.det( 2.0 * np.pi * S  ) ) / gateVolume
 
         
         for m in np.arange( 0, totalReturns ):
